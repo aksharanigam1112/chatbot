@@ -2,12 +2,14 @@ import nltk
 from nltk.stem.lancaster import LancasterStemmer
 stemmer = LancasterStemmer()
 
-import numpy
+import numpy as np
 import tflearn
 import tensorflow
 import random
 import json
 import pickle
+import warnings
+warnings.filterwarnings(action="ignore")
 
 with open("intents.json") as file:
     data = json.load(file)
@@ -59,8 +61,8 @@ except:
         output.append(output_row)
 
 
-    training = numpy.array(training)
-    output = numpy.array(output)
+    training = np.array(training)
+    output = np.array(output)
 
     with open("data.pickle", "wb") as f:
         pickle.dump((words, labels, training, output), f)
@@ -93,23 +95,25 @@ def bag_of_words(s, words):
             if w == se:
                 bag[i] = 1
 
-    return numpy.array(bag)
+    return np.array(bag)
 
 
 def chat():
-    print("Start talking with the bot (type quit to stop)!")
+    print("Hi, I am Chatty !! (type quit to stop)!")
     while True:
         inp = input("You: ")
         if inp.lower() == "quit":
             break
 
-        results = model.predict([bag_of_words(inp, words)])
-        results_index = numpy.argmax(results)
+        results = model.predict([bag_of_words(inp, words)])[0]
+        results_index = np.argmax(results)
         tag = labels[results_index]
 
-        for tg in data["intents"]:
-            if tg['tag'] == tag:
-                responses = tg['responses']
-
-                print(random.choice(responses))
+        if(results[results_index]>0.7):
+            for tg in data["intents"]:
+                if tg['tag'] == tag:
+                    responses = tg['responses']
+                    print(random.choice(responses))
+        else:
+            print("I didn't get that, try again")
 chat()
